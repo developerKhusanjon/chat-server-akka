@@ -4,14 +4,17 @@ package api
 import services.ChatService
 
 import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.http.scaladsl.coding.Decoder
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.util.Timeout
 import dev.khusanjon.actors.ChatRoom.RoomCommand
 import org.slf4j.Logger
 
+import java.util.UUID
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationInt
+import scala.io.Source
 
 class ChatApi(service: ChatService, room: ActorRef[RoomCommand], logger: Logger)(implicit val system: ActorSystem[_]) {
 
