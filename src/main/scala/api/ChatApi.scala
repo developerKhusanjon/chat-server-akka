@@ -8,7 +8,7 @@ import akka.http.scaladsl.coding.Decoder
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.util.Timeout
-import dev.khusanjon.actors.ChatRoom.RoomCommand
+import actors.ChatRoom.RoomCommand
 import org.slf4j.Logger
 
 import java.util.UUID
