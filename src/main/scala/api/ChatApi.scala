@@ -1,20 +1,29 @@
 package dev.khusanjon
 package api
 
-import services.ChatService
-
+import akka.Done
+import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.{ActorRef, ActorSystem}
-import akka.http.scaladsl.coding.Decoder
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.Route
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.typed.scaladsl.ActorSource
 import akka.util.Timeout
-import actors.ChatRoom.RoomCommand
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
+import dev.khusanjon.actors.Chat.{AddNewUser, ChatCommand, ProcessMessage}
+import dev.khusanjon.api.ChatApi.{ChatCreated, StartChat, startChatDecoder}
+import dev.khusanjon.actors.ChatRoom.{AddNewChat, GetChatMeta, RoomCommand}
+import dev.khusanjon.services.ChatService
 import org.slf4j.Logger
 
 import java.util.UUID
-import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationInt
-import scala.io.Source
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class ChatApi(service: ChatService, room: ActorRef[RoomCommand], logger: Logger)(implicit val system: ActorSystem[_]) {
 
@@ -30,7 +39,7 @@ class ChatApi(service: ChatService, room: ActorRef[RoomCommand], logger: Logger)
             val receiverId = start.receiver.id.toString
             logger.info(s"Starting new chat sender: $senderId, receiver: $receiverId")
             val eventualCreated =
-              store
+              room
                 .ask(ref => AddNewChat(start.sender, start.receiver, ref))
                 .map(id => {
                   val chatLinks = service.generateChatLinks(id, senderId, receiverId)
@@ -42,7 +51,7 @@ class ChatApi(service: ChatService, room: ActorRef[RoomCommand], logger: Logger)
           }
         }
       }, path(IntNumber / "messages" / Segment) { (id, userId) =>
-        onSuccess(store.ask(ref => GetChatMeta(id, userId, ref))) {
+        onSuccess(room.ask(ref => GetChatMeta(id, userId, ref))) {
           case Some(meta) => handleWebSocketMessages(websocketFlow(meta.userName, meta.ref))
           case None => complete(StatusCodes.NotFound)
         }

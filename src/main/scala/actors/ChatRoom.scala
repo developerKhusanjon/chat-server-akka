@@ -4,6 +4,7 @@ package actors
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import dev.khusanjon.actors.Chat.ChatCommand
+import dev.khusanjon.api.ChatApi.User
 
 import scala.collection.mutable
 

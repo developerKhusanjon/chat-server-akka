@@ -19,6 +19,7 @@ lazy val root = (project in file(".")).
     idePackagePrefix := Some("dev.khusanjon"),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-stream-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "de.heikoseeberger" %% "akka-http-circe" % "1.39.2",
       "io.circe" %% "circe-generic" % "0.14.5",
